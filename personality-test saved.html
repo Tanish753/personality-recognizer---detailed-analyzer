@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Five Personality Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{--bg:#0d0f1a;--surface:#151828;--card:#1c2035;--border:rgba(255,255,255,0.08);--accent:#a78bfa;--accent2:#38bdf8;--accent3:#fb7185;--accent4:#34d399;--text:#f0f4ff;--muted:#8892b0;--gold:#fbbf24}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden}
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 20% 20%,rgba(167,139,250,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(56,189,248,0.05) 0%,transparent 60%)}
+.container{max-width:860px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.hero{text-align:center;padding:80px 0 50px}
+.hero-badge{display:inline-block;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);color:var(--accent);font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:6px 18px;border-radius:100px;margin-bottom:28px}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(38px,7vw,68px);font-weight:900;line-height:1.1;letter-spacing:-1px;background:linear-gradient(135deg,#f0f4ff 0%,var(--accent) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
+.hero>p{font-size:17px;color:var(--muted);max-width:520px;margin:0 auto 48px;line-height:1.7}
+.mode-label{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:680px;margin:0 auto 32px}
+@media(max-width:540px){.mode-grid{grid-template-columns:1fr}}
+.mode-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:26px 18px 22px;cursor:pointer;transition:all .22s;text-align:center;position:relative}
+.mode-card:hover{border-color:rgba(167,139,250,.45);transform:translateY(-3px);background:rgba(167,139,250,.05)}
+.mode-card.active{border-color:var(--accent);background:rgba(167,139,250,.1)}
+.mode-card.active::after{content:'✓';position:absolute;top:12px;right:14px;color:var(--accent);font-size:14px;font-weight:500}
+.mode-qs{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;color:var(--text);line-height:1;margin-bottom:8px}
+.mode-card.active .mode-qs{color:var(--accent)}
+.mode-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
+.mode-desc{font-size:12px;color:var(--muted);line-height:1.55}
+.mode-tag{display:inline-block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 9px;border-radius:100px;margin-top:12px}
+.tag-quick{background:rgba(56,189,248,.12);color:var(--accent2);border:1px solid rgba(56,189,248,.25)}
+.tag-detailed{background:rgba(167,139,250,.12);color:var(--accent);border:1px solid rgba(167,139,250,.25)}
+.tag-full{background:rgba(251,113,133,.12);color:var(--accent3);border:1px solid rgba(251,113,133,.25)}
+.selected-info{display:none;align-items:center;justify-content:center;gap:24px;font-size:13px;color:var(--muted);margin-bottom:32px;flex-wrap:wrap}
+.selected-info span{display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.btn-start{padding:16px 52px;font-size:16px;font-weight:500;background:linear-gradient(135deg,var(--accent),#7c3aed);color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 32px rgba(167,139,250,.35);transition:all .25s;letter-spacing:.5px}
+.btn-start:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(167,139,250,.45)}
+.btn-start:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.progress-wrap{background:var(--card);border:1px solid var(--border);border-radius:100px;height:6px;margin-bottom:40px;overflow:hidden;display:none}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:100px;transition:width .5s ease}
+.progress-meta{display:none;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.prog-mode-badge{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:var(--accent);padding:3px 10px;border-radius:100px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+#test-section{display:none}
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px;margin-bottom:24px;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.q-number{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.q-trait{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.q-text{font-family:'Playfair Display',serif;font-size:clamp(18px,3vw,24px);font-weight:400;line-height:1.5;margin-bottom:32px;color:var(--text)}
+.likert-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px;padding:0 2px}
+.likert-options{display:flex;gap:8px}
+@media(max-width:500px){.likert-options{gap:4px}}
+.likert-btn{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 4px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:300;cursor:pointer;text-align:center;transition:all .2s;line-height:1.4}
+.likert-btn:hover{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.4);transform:translateY(-2px)}
+.likert-btn.selected{background:rgba(167,139,250,.15);border-color:var(--accent);color:var(--accent)}
+.likert-num{font-size:20px;font-weight:700;display:block;margin-bottom:4px;font-family:'Playfair Display',serif}
+.likert-btn.selected .likert-num{color:var(--accent)}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.btn{padding:12px 28px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#7c3aed);color:white;box-shadow:0 4px 20px rgba(167,139,250,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(167,139,250,.4)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+#result-section{display:none}
+.result-hero{text-align:center;padding:60px 0 30px}
+.big5-badge{display:inline-flex;gap:14px;font-family:'Playfair Display',serif;font-size:22px;font-weight:900;letter-spacing:3px;animation:fadeUp .6s ease;margin-bottom:12px}
+.result-title{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,38px);font-weight:700;color:var(--text);margin-bottom:12px;animation:fadeUp .7s ease}
+.result-tagline{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto;line-height:1.7;animation:fadeUp .8s ease}
+.accuracy-banner{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:12px 20px;margin:24px auto 0;max-width:420px;font-size:13px;color:var(--accent4)}
+.accuracy-banner strong{font-weight:500}
+.scores-grid{display:grid;grid-template-columns:1fr;gap:14px;margin:36px 0}
+.score-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;animation:fadeUp .5s ease}
+.score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.score-label{font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:8px}
+.score-label .emj{font-size:18px}
+.score-value{font-size:13px;font-weight:500}
+.score-bar-bg{height:10px;background:rgba(255,255,255,.06);border-radius:100px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:100px;transition:width 1.2s ease .3s}
+.score-desc{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+.chart-section{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px;margin-bottom:24px;animation:fadeUp .6s ease}
+.section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:24px;color:var(--text)}
+.chart-wrap{display:flex;gap:32px;align-items:center;flex-wrap:wrap}
+.chart-canvas-wrap{position:relative;width:240px;height:240px;flex-shrink:0}
+.chart-legend{flex:1;min-width:180px}
+.legend-item{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:14px}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.legend-label{color:var(--muted);flex:1}
+.legend-pct{font-weight:500;color:var(--text)}
+.ai-section{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px;margin-bottom:24px;animation:fadeUp .7s ease}
+.ai-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent2);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);padding:5px 12px;border-radius:100px;margin-bottom:20px}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--accent2);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.ai-text{font-size:15px;line-height:1.8;color:var(--muted)}
+.ai-text p{margin-bottom:16px}
+.ai-text strong{color:var(--text);font-weight:500}
+.ai-loading{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px;padding:20px 0}
+.spinner{width:20px;height:20px;border:2px solid rgba(167,139,250,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.traits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:24px}
+.trait-chip{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:12px;color:var(--muted);text-align:center}
+.trait-chip .emj{font-size:22px;display:block;margin-bottom:6px}
+.trait-chip strong{color:var(--text);font-size:13px;font-weight:500;display:block;margin-bottom:4px}
+.retake-btn{display:block;width:100%;padding:16px;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.retake-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pdf-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(251,113,133,0.15));border:1px solid rgba(251,191,36,0.35);border-radius:12px;color:#fbbf24;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:60px;letter-spacing:.3px}
+.pdf-btn:hover{background:linear-gradient(135deg,rgba(251,191,36,0.25),rgba(251,113,133,0.25));border-color:rgba(251,191,36,0.6);transform:translateY(-2px);box-shadow:0 6px 24px rgba(251,191,36,0.2)}
+.pdf-btn svg{flex-shrink:0}
+
+@media print{
+  body{background:#fff !important;color:#111 !important}
+  .stars,.retake-btn,.pdf-btn,.ai-label,.pulse,.spinner,#test-section,#hero-section{display:none !important}
+  .container{max-width:100%;padding:0 16px}
+  .result-hero{padding:30px 0 20px}
+  .hero h1,.result-title{-webkit-text-fill-color:#111 !important;color:#111 !important;background:none !important}
+  .big5-badge span{color:#555 !important}
+  .result-tagline,.accuracy-banner{color:#444 !important}
+  .accuracy-banner{background:#f0fdf4 !important;border-color:#86efac !important;color:#166534 !important}
+  .score-card,.chart-section,.ai-section,.trait-chip{background:#f8f9ff !important;border:1px solid #e2e8f0 !important;break-inside:avoid}
+  .section-title,.ai-section .section-title{color:#111 !important}
+  .score-label,.score-value,.legend-label,.legend-pct{color:#222 !important}
+  .score-desc,.ai-text,.result-tagline{color:#444 !important}
+  .score-bar-bg{background:#e2e8f0 !important}
+  .trait-chip strong{color:#111 !important}
+  .trait-chip{color:#444 !important}
+  #result-section{display:block !important}
+  .chart-wrap{flex-direction:column;align-items:flex-start}
+  .chart-canvas-wrap{width:200px;height:200px}
+  @page{margin:18mm 15mm;size:A4}
+}
+.bar-O{background:linear-gradient(90deg,#a78bfa,#7c3aed)}
+.bar-C{background:linear-gradient(90deg,#38bdf8,#0284c7)}
+.bar-E{background:linear-gradient(90deg,#fbbf24,#d97706)}
+.bar-A{background:linear-gradient(90deg,#34d399,#059669)}
+.bar-N{background:linear-gradient(90deg,#fb7185,#be123c)}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="container">
+
+<div class="hero" id="hero-section">
+  <div class="hero-badge">&#10022; Big Five (OCEAN) Personality Assessment</div>
+  <h1>Discover Your<br>True Self</h1>
+  <p>A scientifically-grounded personality test based on the Big Five model — Openness, Conscientiousness, Extraversion, Agreeableness &amp; Neuroticism — with AI-powered deep analysis and visual report.</p>
+  <div class="mode-label">Choose your test depth</div>
+  <div class="mode-grid">
+    <div class="mode-card" id="mode-25" onclick="selectMode(25)">
+      <div class="mode-qs">25</div>
+      <div class="mode-title">Quick Snapshot</div>
+      <div class="mode-desc">5 questions per trait. Fast and focused for a first look.</div>
+      <div class="mode-tag tag-quick">~6 min</div>
+    </div>
+    <div class="mode-card" id="mode-50" onclick="selectMode(50)">
+      <div class="mode-qs">50</div>
+      <div class="mode-title">Moderate Test</div>
+      <div class="mode-desc">10 per trait. Balanced and reliable for deeper insight.</div>
+      <div class="mode-tag tag-detailed">~12 min</div>
+    </div>
+    <div class="mode-card" id="mode-96" onclick="selectMode(96)">
+      <div class="mode-qs">96</div>
+      <div class="mode-title">Full Test</div>
+      <div class="mode-desc">All questions. Maximum accuracy and richest nuance.</div>
+      <div class="mode-tag tag-full">~25 min</div>
+    </div>
+  </div>
+  <div class="selected-info" id="selected-info">
+    <span><span class="dot" style="background:var(--accent4)"></span><span id="q-count-label"></span></span>
+    <span><span class="dot" style="background:var(--accent)"></span><span id="accuracy-label"></span></span>
+    <span><span class="dot" style="background:var(--accent2)"></span>AI analysis included</span>
+  </div>
+  <button class="btn-start" id="start-btn" onclick="startTest()" disabled>Select a Mode to Begin</button>
+</div>
+
+<div id="test-section">
+  <div class="progress-meta" id="prog-meta">
+    <span id="prog-label"></span>
+    <span class="prog-mode-badge" id="prog-mode-badge"></span>
+  </div>
+  <div class="progress-wrap" id="prog-wrap">
+    <div class="progress-bar" id="prog-bar" style="width:0%"></div>
+  </div>
+  <div id="question-area"></div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" id="prev-btn" onclick="prevQ()" style="display:none">&#8592; Back</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextQ()" disabled>Continue &#8594;</button>
+  </div>
+</div>
+
+<div id="result-section">
+  <div class="result-hero">
+    <div class="big5-badge" id="res-ocean"></div>
+    <div class="result-title" id="res-title"></div>
+    <div class="result-tagline" id="res-tagline"></div>
+    <div class="accuracy-banner" id="accuracy-banner"></div>
+  </div>
+  <div class="scores-grid" id="scores-grid"></div>
+  <div class="chart-section">
+    <div class="section-title">Your OCEAN Personality Breakdown</div>
+    <div class="chart-wrap">
+      <div class="chart-canvas-wrap">
+        <canvas id="pieChart" role="img" aria-label="Pie chart of Big Five personality trait scores"></canvas>
+      </div>
+      <div class="chart-legend" id="chart-legend"></div>
+    </div>
+  </div>
+  <div class="ai-section">
+    <div class="ai-label"><span class="pulse"></span> AI Analysis Report</div>
+    <div class="section-title" id="ai-section-title">Generating your report&#8230;</div>
+    <div id="ai-content"><div class="ai-loading"><div class="spinner"></div> Analysing your responses with AI&#8230;</div></div>
+  </div>
+  <div class="traits-grid" id="traits-grid"></div>
+  <button class="retake-btn" onclick="retake()">&#8635; Retake the Test</button>
+  <button class="pdf-btn" onclick="savePDF()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    Save as PDF / Print Report
+  </button>
+</div>
+
+</div>
+<script>
+const ALL_QUESTIONS=[
+  {sno:1,text:"I accept people the way they are.",trait:"A",rev:false},
+  {sno:4,text:"I take care of other people before taking care of myself.",trait:"A",rev:false},
+  {sno:10,text:"I treat everyone with kindness and sympathy.",trait:"A",rev:false},
+  {sno:12,text:"I have a kind word for everyone.",trait:"A",rev:false},
+  {sno:15,text:"I start arguments just for the fun of it.",trait:"A",rev:true},
+  {sno:22,text:"I stop what I am doing to help other people.",trait:"A",rev:false},
+  {sno:30,text:"I would describe myself as soft-hearted.",trait:"A",rev:false},
+  {sno:35,text:"I am an agreeable person.",trait:"A",rev:false},
+  {sno:40,text:"I am charitable toward others.",trait:"A",rev:false},
+  {sno:45,text:"I am a humble person.",trait:"A",rev:false},
+  {sno:53,text:"I feel I am better than other people.",trait:"A",rev:true},
+  {sno:57,text:"I criticize other people.",trait:"A",rev:true},
+  {sno:63,text:"I find ways to bring happiness to my friends and family.",trait:"A",rev:false},
+  {sno:69,text:"I spend my time helping the people closest to me.",trait:"A",rev:false},
+  {sno:75,text:"I will do things for my loved ones before I do things for myself.",trait:"A",rev:false},
+  {sno:81,text:"I often come up with small, everyday ways to be kind to others.",trait:"A",rev:false},
+  {sno:87,text:"I do favours for other people.",trait:"A",rev:false},
+  {sno:93,text:"I go out of my way to make other people's days a bit brighter.",trait:"A",rev:false},
+  {sno:2,text:"I believe in the importance of art.",trait:"O",rev:false},
+  {sno:6,text:"I have a vivid imagination.",trait:"O",rev:false},
+  {sno:21,text:"I do not like art.",trait:"O",rev:true},
+  {sno:26,text:"I avoid philosophical discussions.",trait:"O",rev:true},
+  {sno:27,text:"I would describe myself as original.",trait:"O",rev:false},
+  {sno:32,text:"I am an inquisitive person.",trait:"O",rev:false},
+  {sno:37,text:"I am a creative person.",trait:"O",rev:false},
+  {sno:42,text:"I have an imaginative mind.",trait:"O",rev:false},
+  {sno:48,text:"I enjoy going to art museums.",trait:"O",rev:false},
+  {sno:50,text:"I am interested in the meaning of things.",trait:"O",rev:false},
+  {sno:56,text:"I am not interested in abstract ideas.",trait:"O",rev:true},
+  {sno:59,text:"I enjoy hearing new ideas.",trait:"O",rev:false},
+  {sno:61,text:"I express myself through art, music, or writing.",trait:"O",rev:false},
+  {sno:62,text:"I do not try to predict what may happen in the future.",trait:"O",rev:true},
+  {sno:64,text:"I tend to come up with better alternatives to established procedures.",trait:"O",rev:false},
+  {sno:66,text:"I feel connected to a larger force or power in the world around me.",trait:"O",rev:false},
+  {sno:67,text:"I can see my feelings and experiences reflected in creative works.",trait:"O",rev:false},
+  {sno:68,text:"I can clearly visualize what could happen in the future.",trait:"O",rev:false},
+  {sno:70,text:"I often come up with a new way of doing things.",trait:"O",rev:false},
+  {sno:72,text:"I see universal or spiritual forces at work in my life.",trait:"O",rev:false},
+  {sno:73,text:"Creative outlets are a stress reliever for me.",trait:"O",rev:false},
+  {sno:76,text:"My ideas are often unexpected and surprising.",trait:"O",rev:false},
+  {sno:78,text:"I believe my life holds a higher purpose.",trait:"O",rev:false},
+  {sno:79,text:"I would enjoy writing a poem about my feelings or experiences.",trait:"O",rev:false},
+  {sno:80,text:"I am often looking ahead, anticipating future events.",trait:"O",rev:false},
+  {sno:82,text:"I am an innovative problem-solver.",trait:"O",rev:false},
+  {sno:84,text:"I believe the universe holds powerful mysteries that we cannot fully understand.",trait:"O",rev:false},
+  {sno:85,text:"I could imagine turning my experiences into a book or song.",trait:"O",rev:false},
+  {sno:88,text:"I have ideas that are original and different from what has been done before.",trait:"O",rev:false},
+  {sno:90,text:"I feel deep appreciation for the purpose and meaning of life.",trait:"O",rev:false},
+  {sno:91,text:"I use my creativity to bring meaning to my experiences.",trait:"O",rev:false},
+  {sno:94,text:"When I have a problem, I come up with a new and unexpected way to solve it.",trait:"O",rev:false},
+  {sno:96,text:"I feel we are all a part of something greater than ourselves.",trait:"O",rev:false},
+  {sno:3,text:"My moods change easily.",trait:"N",rev:false},
+  {sno:8,text:"I often feel blue.",trait:"N",rev:false},
+  {sno:14,text:"I often feel anxious about what could go wrong.",trait:"N",rev:false},
+  {sno:16,text:"I often worry that I am not good enough.",trait:"N",rev:false},
+  {sno:19,text:"There are many things that I do not like about myself.",trait:"N",rev:false},
+  {sno:20,text:"I seldom feel blue.",trait:"N",rev:true},
+  {sno:24,text:"I am often troubled by negative thoughts.",trait:"N",rev:false},
+  {sno:25,text:"I feel comfortable with myself.",trait:"N",rev:true},
+  {sno:31,text:"I am often tense.",trait:"N",rev:false},
+  {sno:36,text:"I am often nervous.",trait:"N",rev:false},
+  {sno:41,text:"I am a moody person.",trait:"N",rev:false},
+  {sno:46,text:"I tend to be pessimistic.",trait:"N",rev:false},
+  {sno:5,text:"I am always prepared.",trait:"C",rev:false},
+  {sno:11,text:"I get chores done right away.",trait:"C",rev:false},
+  {sno:17,text:"I find it difficult to get to work.",trait:"C",rev:true},
+  {sno:23,text:"I change my plans frequently.",trait:"C",rev:true},
+  {sno:28,text:"I am a systematic person.",trait:"C",rev:false},
+  {sno:33,text:"I am forgetful.",trait:"C",rev:true},
+  {sno:38,text:"I am self-disciplined.",trait:"C",rev:false},
+  {sno:43,text:"I am an organised person.",trait:"C",rev:false},
+  {sno:49,text:"I always make good use of my time.",trait:"C",rev:false},
+  {sno:51,text:"I avoid taking on a lot of responsibility.",trait:"C",rev:true},
+  {sno:55,text:"I make plans and stick to them.",trait:"C",rev:false},
+  {sno:60,text:"It is important to me that people are on time.",trait:"C",rev:false},
+  {sno:74,text:"I make plans for many years into the future.",trait:"C",rev:false},
+  {sno:86,text:"I have a good sense of what my future holds.",trait:"C",rev:false},
+  {sno:92,text:"I have trouble picturing where I will be in five years.",trait:"C",rev:true},
+  {sno:7,text:"I feel comfortable around people.",trait:"E",rev:false},
+  {sno:9,text:"I am the life of the party.",trait:"E",rev:false},
+  {sno:13,text:"I am skilled in handling social situations.",trait:"E",rev:false},
+  {sno:18,text:"I stay in the background.",trait:"E",rev:true},
+  {sno:29,text:"I am a shy person.",trait:"E",rev:true},
+  {sno:34,text:"I am a reserved person.",trait:"E",rev:true},
+  {sno:39,text:"I am an outgoing person.",trait:"E",rev:false},
+  {sno:44,text:"I am a talkative person.",trait:"E",rev:false},
+  {sno:47,text:"I have a lot to say.",trait:"E",rev:false},
+  {sno:52,text:"I don't like to draw attention to myself.",trait:"E",rev:true},
+  {sno:54,text:"I make friends easily.",trait:"E",rev:false},
+  {sno:58,text:"I don't talk a lot.",trait:"E",rev:true},
+  {sno:65,text:"I like to joke around.",trait:"E",rev:false},
+  {sno:71,text:"I feel most situations can be improved with a little humour and playfulness.",trait:"E",rev:false},
+  {sno:77,text:"I often try to lighten the mood with a joke.",trait:"E",rev:false},
+  {sno:83,text:"I am a serious person.",trait:"E",rev:true},
+  {sno:89,text:"I can be a playful or even silly person sometimes.",trait:"E",rev:false},
+  {sno:95,text:"I am known to have a great sense of humour.",trait:"E",rev:false}
+];
+
+const TM={
+  O:{label:"Openness",emoji:"&#127756;",color:"#a78bfa",cls:"bar-O",low:"Practical & conventional",high:"Creative & curious",
+     desc:{high:"You are highly imaginative, curious, and open to new experiences. You appreciate art, new ideas, and unconventional thinking.",
+           mid:"You balance practicality with creativity, appreciating new ideas when relevant while also valuing proven approaches.",
+           low:"You are grounded and practical, preferring familiar routines and concrete facts over abstract theories."}},
+  C:{label:"Conscientiousness",emoji:"&#128208;",color:"#38bdf8",cls:"bar-C",low:"Flexible & spontaneous",high:"Organised & disciplined",
+     desc:{high:"You are highly organised, reliable, and driven. You plan ahead, meet deadlines, and take your responsibilities seriously.",
+           mid:"You are reasonably organised but can adapt when plans change, balancing structure with spontaneity.",
+           low:"You are flexible and spontaneous. Rigid schedules feel constraining — you prefer to respond to life as it comes."}},
+  E:{label:"Extraversion",emoji:"&#9889;",color:"#fbbf24",cls:"bar-E",low:"Introverted & reflective",high:"Extraverted & energetic",
+     desc:{high:"You are outgoing, enthusiastic, and energised by social interaction. You love being around people and often take centre stage.",
+           mid:"You are comfortable both in social situations and alone, enjoying socialising while also valuing quiet time.",
+           low:"You are reflective and reserved, preferring deep conversations over large gatherings. You recharge through solitude."}},
+  A:{label:"Agreeableness",emoji:"&#128154;",color:"#34d399",cls:"bar-A",low:"Direct & competitive",high:"Warm & cooperative",
+     desc:{high:"You are warm, kind, and genuinely interested in others. You prioritise harmony and are often the first to help.",
+           mid:"You are cooperative and considerate but also able to assert yourself when needed, balancing empathy with directness.",
+           low:"You are direct, competitive, and willing to challenge others. You prioritise honesty and results over social harmony."}},
+  N:{label:"Neuroticism",emoji:"&#127754;",color:"#fb7185",cls:"bar-N",low:"Emotionally stable & calm",high:"Emotionally sensitive",
+     desc:{high:"You experience emotions intensely and may be prone to stress or mood swings. Your sensitivity makes you deeply empathetic.",
+           mid:"You experience a normal range of emotions and can handle stress reasonably well, though you may feel overwhelmed at times.",
+           low:"You are emotionally stable and calm under pressure, rarely bothered by day-to-day stress. You bounce back quickly."}}
+};
+
+const LIKERT=[{label:"Very Inaccurate",v:1},{label:"Inaccurate",v:2},{label:"Neutral",v:3},{label:"Accurate",v:4},{label:"Very Accurate",v:5}];
+const ACCURACY={25:"~72% accurate",50:"~87% accurate",96:"~96% accurate"};
+const MNAME={25:"Quick Snapshot",50:"Moderate Test",96:"Full Test"};
+
+let selMode=null,QS=[],cur=0,ans={},chart=null;
+
+function selectMode(n){
+  selMode=n;
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('mode-'+n).classList.add('active');
+  document.getElementById('selected-info').style.display='flex';
+  document.getElementById('q-count-label').textContent=n+' questions selected';
+  document.getElementById('accuracy-label').textContent=ACCURACY[n];
+  const b=document.getElementById('start-btn');
+  b.disabled=false;b.textContent='Start '+MNAME[n]+' \u2192';
+}
+
+function buildQS(n){
+  const traits=['O','C','E','A','N'],perT=Math.floor(n/5);
+  let pool=[];
+  traits.forEach(t=>{
+    const tqs=ALL_QUESTIONS.filter(q=>q.trait===t);
+    const take=Math.min(perT,tqs.length);
+    pool=pool.concat([...tqs].sort(()=>Math.random()-.5).slice(0,take));
+  });
+  return pool.sort(()=>Math.random()-.5);
+}
+
+function startTest(){
+  if(!selMode)return;
+  QS=buildQS(selMode);ans={};cur=0;
+  document.getElementById('hero-section').style.display='none';
+  document.getElementById('test-section').style.display='block';
+  document.getElementById('prog-wrap').style.display='block';
+  document.getElementById('prog-meta').style.display='flex';
+  document.getElementById('prog-mode-badge').textContent=MNAME[selMode];
+  renderQ();
+}
+
+function renderQ(){
+  const q=QS[cur],total=QS.length,pct=Math.round((cur/total)*100);
+  document.getElementById('prog-bar').style.width=pct+'%';
+  document.getElementById('prog-label').textContent='Question '+(cur+1)+' of '+total;
+  document.getElementById('prev-btn').style.display=cur>0?'block':'none';
+  const nb=document.getElementById('next-btn');
+  nb.disabled=!(cur in ans);
+  nb.textContent=cur===total-1?'See My Results \u2192':'Continue \u2192';
+  const tm=TM[q.trait];
+  const btns=LIKERT.map(l=>'<button class="likert-btn '+(ans[cur]===l.v?'selected':'')+'" onclick="pickAns('+l.v+')"><span class="likert-num">'+l.v+'</span>'+l.label+'</button>').join('');
+  document.getElementById('question-area').innerHTML=
+    '<div class="q-card">'+
+    '<div class="q-number">Question '+(cur+1)+' of '+total+'</div>'+
+    '<div class="q-trait">'+tm.emoji+' '+tm.label+'</div>'+
+    '<div class="q-text">'+q.text+'</div>'+
+    '<div class="likert-labels"><span>\u2190 Strongly Disagree</span><span>Strongly Agree \u2192</span></div>'+
+    '<div class="likert-options">'+btns+'</div>'+
+    '</div>';
+}
+
+function pickAns(v){ans[cur]=v;renderQ();document.getElementById('next-btn').disabled=false;}
+function nextQ(){if(!(cur in ans))return;if(cur===QS.length-1){showResults();return;}cur++;renderQ();}
+function prevQ(){if(cur>0){cur--;renderQ();}}
+
+function calcPcts(){
+  const tot={O:0,C:0,E:0,A:0,N:0},cnt={O:0,C:0,E:0,A:0,N:0};
+  QS.forEach((q,i)=>{
+    if(!(i in ans))return;
+    let v=ans[i];if(q.rev)v=6-v;
+    tot[q.trait]+=v;cnt[q.trait]++;
+  });
+  const p={};
+  ['O','C','E','A','N'].forEach(t=>{p[t]=cnt[t]>0?Math.round((tot[t]/(cnt[t]*5))*100):50;});
+  return p;
+}
+
+function lvl(p){return p>=65?'high':p>=40?'mid':'low';}
+
+function buildTitle(p){
+  const top2=['O','C','E','A','N'].sort((a,b)=>p[b]-p[a]).slice(0,2).sort().join('');
+  const m={AE:'The Charismatic Connector',AC:'The Reliable Nurturer',AO:'The Creative Empath',AN:'The Compassionate Idealist',
+            CE:'The Dynamic Achiever',CN:'The Determined Striver',CO:'The Disciplined Innovator',
+            EN:'The Intense Performer',EO:'The Visionary Explorer',NO:'The Introspective Dreamer'};
+  return m[top2]||'The Balanced Personality';
+}
+
+function showResults(){
+  const p=calcPcts();
+  document.getElementById('test-section').style.display='none';
+  document.getElementById('result-section').style.display='block';
+  const ocean=['O','C','E','A','N'].map(t=>{
+    const col=p[t]>=65?TM[t].color:p[t]<40?'var(--muted)':'var(--text)';
+    return '<span style="color:'+col+'" title="'+TM[t].label+' '+p[t]+'%">'+t+'</span>';
+  }).join('');
+  document.getElementById('res-ocean').innerHTML=ocean;
+  const title=buildTitle(p);
+  document.getElementById('res-title').textContent=title;
+  const top=['O','C','E','A','N'].sort((a,b)=>p[b]-p[a])[0];
+  document.getElementById('res-tagline').textContent='Your strongest trait is '+TM[top].label+' ('+p[top]+'%). Your unique OCEAN profile shapes how you think, feel, and engage with the world.';
+  document.getElementById('accuracy-banner').innerHTML='<span>\u2736</span> <span>'+selMode+'-question assessment &mdash; <strong>'+ACCURACY[selMode]+'</strong></span>';
+  renderScores(p);renderPie(p);renderChips(p);genAI(p,title);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderScores(p){
+  const g=document.getElementById('scores-grid');g.innerHTML='';
+  ['O','C','E','A','N'].forEach(t=>{
+    const m=TM[t],pv=p[t],l=lvl(pv);
+    const vc=l==='high'?m.color:l==='low'?'var(--muted)':'var(--text)';
+    g.innerHTML+='<div class="score-card">'+
+      '<div class="score-row">'+
+      '<span class="score-label"><span class="emj">'+m.emoji+'</span>'+m.label+'</span>'+
+      '<span class="score-value" style="color:'+vc+'">'+pv+'% &mdash; '+(l==='high'?m.high:l==='low'?m.low:'Balanced')+'</span>'+
+      '</div>'+
+      '<div class="score-bar-bg"><div class="score-bar-fill '+m.cls+'" id="sb-'+t+'" style="width:0%"></div></div>'+
+      '<div class="score-desc">'+m.desc[l]+'</div>'+
+      '</div>';
+  });
+  setTimeout(()=>['O','C','E','A','N'].forEach(t=>document.getElementById('sb-'+t).style.width=p[t]+'%'),100);
+}
+
+function renderPie(p){
+  const traits=['O','C','E','A','N'];
+  const ctx=document.getElementById('pieChart').getContext('2d');
+  if(chart)chart.destroy();
+  chart=new Chart(ctx,{
+    type:'pie',
+    data:{
+      labels:traits.map(t=>TM[t].label+' '+p[t]+'%'),
+      datasets:[{data:traits.map(t=>p[t]),backgroundColor:traits.map(t=>TM[t].color),borderWidth:2,borderColor:'#1c2035',hoverOffset:8}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.label}}}}
+  });
+  const leg=document.getElementById('chart-legend');leg.innerHTML='';
+  traits.forEach(t=>{
+    const m=TM[t];
+    leg.innerHTML+='<div class="legend-item"><span class="legend-dot" style="background:'+m.color+'"></span><span class="legend-label">'+m.emoji+' '+m.label+'</span><span class="legend-pct">'+p[t]+'%</span></div>';
+  });
+}
+
+function renderChips(p){
+  const g=document.getElementById('traits-grid');g.innerHTML='';
+  ['O','C','E','A','N'].forEach(t=>{
+    const m=TM[t],l=lvl(p[t]);
+    g.innerHTML+='<div class="trait-chip"><span class="emj">'+m.emoji+'</span><strong>'+m.label+'</strong>'+p[t]+'% &middot; '+(l==='high'?m.high:l==='low'?m.low:'Balanced')+'</div>';
+  });
+}
+
+async function genAI(p,title){
+  const summary=['O','C','E','A','N'].map(t=>TM[t].label+' '+p[t]+'% ('+lvl(p[t])+')').join(', ');
+  const prompt='You are an expert personality psychologist specialising in the Big Five (OCEAN) model. The user completed a '+selMode+'-question assessment ('+ACCURACY[selMode]+') with this profile:\n\n'+summary+'\n\nArchetype: "'+title+'"\n\nWrite a warm, insightful, personal analysis report using this structure (each as <p><strong>Title:</strong> content</p>):\n1. Core Identity\n2. Thinking & Creative Style (O & C)\n3. Social World (E & A)\n4. Emotional Landscape (N)\n5. Strengths & Superpowers\n6. Growth Edges\n\nEach section: 2-3 sentences. Tone: warm, empowering, specific. Address as "you". ~320 words total. No preamble or closing.';
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    const d=await r.json();
+    const txt=d.content.map(b=>b.text||'').join('');
+    document.getElementById('ai-section-title').textContent='Your Personality Report \u2014 '+title;
+    document.getElementById('ai-content').innerHTML='<div class="ai-text">'+txt+'</div>';
+  }catch(e){
+    const top=['O','C','E','A','N'].sort((a,b)=>p[b]-p[a])[0];
+    document.getElementById('ai-section-title').textContent='Your '+title+' Profile';
+    document.getElementById('ai-content').innerHTML='<div class="ai-text"><p>Your profile reveals the fascinating personality of <strong>'+title+'</strong>. With '+TM[top].label+' as your dominant trait at '+p[top]+'%, you bring a distinctive way of engaging with the world.</p><p>Your OCEAN scores paint a rich picture of who you are. Embrace the unique combination of traits that makes you distinctly you.</p></div>';
+  }
+}
+
+function savePDF(){
+  // Wait briefly to ensure AI content is loaded before printing
+  const aiContent=document.getElementById('ai-content');
+  const isLoading=aiContent&&aiContent.querySelector('.ai-loading');
+  if(isLoading){
+    if(!confirm('Your AI report is still loading. Save now anyway?'))return;
+  }
+  window.print();
+}
+
+function retake(){
+  cur=0;ans={};selMode=null;QS=[];
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('active'));
+  const b=document.getElementById('start-btn');
+  b.disabled=true;b.textContent='Select a Mode to Begin';
+  document.getElementById('selected-info').style.display='none';
+  document.getElementById('result-section').style.display='none';
+  document.getElementById('hero-section').style.display='block';
+  document.getElementById('prog-wrap').style.display='none';
+  document.getElementById('prog-meta').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
